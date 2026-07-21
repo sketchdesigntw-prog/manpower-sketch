@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>員工管理系統 - 薪資單版</title>
+  <style>
+    :root{--main:#1f4e79;--accent:#2f75b5;--bg:#f4f7fb;--card:#fff;--line:#d9e2ec;--danger:#c0392b;--ok:#0f766e;--muted:#667085;--warn:#b45309}
+    *{box-sizing:border-box}
+    body{font-family:"Microsoft JhengHei",Arial,sans-serif;margin:0;background:var(--bg);color:#243447}
+    header{background:linear-gradient(135deg,var(--main),var(--accent));color:#fff;padding:22px 18px}
+    header h1{margin:0;font-size:26px} header p{margin:6px 0 0;opacity:.92}
+    main{max-width:1220px;margin:18px auto;padding:0 14px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px;box-shadow:0 5px 18px rgba(31,78,121,.08)}
+    h2{font-size:19px;margin:0 0 12px;color:var(--main);border-left:5px solid var(--accent);padding-left:10px}
+    .grid{display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:12px}
+    label{font-size:13px;color:#344054;font-weight:700;display:block;margin-bottom:5px}
+    input,select,textarea{width:100%;padding:9px 10px;border:1px solid #cfd8e3;border-radius:9px;background:#fff;font-size:14px}
+    textarea{min-height:42px;resize:vertical}.full{grid-column:1/-1}
+    .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+    button{border:0;border-radius:9px;padding:9px 13px;cursor:pointer;font-weight:700;background:var(--accent);color:#fff;white-space:nowrap}
+    button.secondary{background:#64748b} button.danger{background:var(--danger)} button.ok{background:var(--ok)} button.warn{background:var(--warn)}
+    .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.toolbar input{max-width:340px}
+    table{width:100%;border-collapse:collapse;background:#fff;overflow:hidden;border-radius:12px}
+    th,td{border-bottom:1px solid var(--line);padding:9px;text-align:left;font-size:13px;vertical-align:middle}
+    th{background:#eaf2f8;color:#17395c;white-space:nowrap} tr:hover{background:#f8fbfd}
+    .num{text-align:right}.center{text-align:center}.small{font-size:12px;color:var(--muted)}
+    .pill{display:inline-block;padding:3px 8px;border-radius:999px;background:#eef6ff;color:#1f4e79;font-size:12px;font-weight:700}
+    .salarybox{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
+    .metric{background:#f8fbfd;border:1px solid var(--line);border-radius:12px;padding:10px}.metric b{display:block;color:var(--main);font-size:13px}.metric span{font-size:16px;font-weight:800}
+    .notice{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:12px;padding:10px;margin-top:10px;font-size:13px}
+    @media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}.salarybox{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:600px){.grid,.salarybox{grid-template-columns:1fr}.hide-mobile{display:none}main{padding:0 8px}header h1{font-size:22px}table{display:block;overflow-x:auto;white-space:nowrap}th,td{padding:7px}}
+  </style>
+</head>
+<body>
+<header>
+  <h1>員工資料管理系統（薪資單版）</h1>
+  <p>單人單機使用：員工資料、薪資條件、薪資單產生、列印與匯出 HTML。</p>
+</header>
+<main>
+  <section class="card">
+    <h2>員工資料 / 薪資條件</h2>
+    <input type="hidden" id="editIndex" value="">
+    <div class="grid">
+      <div><label>員工編號</label><input id="empid" placeholder="例如 E001"></div>
+      <div><label>姓名</label><input id="name" placeholder="員工姓名"></div>
+      <div><label>部門</label><input id="dept" placeholder="例如 工務部"></div>
+      <div><label>職稱</label><input id="position" placeholder="例如 技術員"></div>
+      <div><label>到職日</label><input id="startDate" type="date" onchange="previewCalc()"></div>
+      <div><label>薪資類型</label><select id="salaryType" onchange="previewCalc()"><option value="月薪">月薪</option><option value="日薪">日薪</option><option value="時薪">時薪</option></select></div>
+      <div><label>薪資金額</label><input id="salaryAmount" type="number" min="0" placeholder="例如 30000" oninput="previewCalc()"></div>
+      <div><label>每月發薪日</label><select id="payDay" onchange="previewCalc()"></select></div>
+      <div><label>每日標準工時</label><input id="workHours" type="number" min="1" max="24" value="8" oninput="previewCalc()"></div>
+      <div><label>固定津貼 / 加給</label><input id="allowance" type="number" min="0" value="0" oninput="previewCalc()"></div>
+      <div><label>預設每月扣款</label><input id="deduction" type="number" min="0" value="0" oninput="previewCalc()"></div>
+      <div><label>加班費率 / 小時</label><input id="overtimeRate" type="number" min="0" value="0" oninput="previewCalc()"></div>
+      <div><label>薪資狀態</label><select id="status"><option>在職</option><option>試用期</option><option>離職</option><option>留職停薪</option></select></div>
+      <div><label>聯絡電話</label><input id="phone" placeholder="可選填"></div>
+      <div><label>電子郵件</label><input id="email" placeholder="可選填"></div>
+      <div><label>銀行帳號</label><input id="bankAccount" placeholder="可選填"></div>
+      <div class="full"><label>薪資條件備註</label><textarea id="salaryNote" placeholder="例如：試用期三個月、餐費另計、加班依公司規定"></textarea></div>
+    </div>
+    <div class="salarybox">
+      <div class="metric"><b>預估下次薪資日</b><span id="nextPayDate">-</span></div>
+      <div class="metric"><b>到職當月計薪天數</b><span id="firstMonthDays">-</span></div>
+      <div class="metric"><b>到職當月預估薪資</b><span id="firstMonthPay">-</span></div>
+      <div class="metric"><b>每月固定薪資估算</b><span id="monthlyPay">-</span></div>
+    </div>
+    <div class="btns">
+      <button class="ok" onclick="saveEmp()">儲存資料</button>
+      <button class="secondary" onclick="clearForm()">清空表單</button>
+      <button onclick="exportCSV()">匯出員工 CSV</button>
+      <button class="danger" onclick="clearAll()">清除全部資料</button>
+    </div>
+    <div class="notice">提醒：薪資單計算為內部管理參考。若需正式薪資、勞健保、勞退、所得稅等法定扣繳，建議再依公司實際規則補上欄位。</div>
+  </section>
+
+  <section class="card">
+    <h2>薪資單產生設定</h2>
+    <div class="grid">
+      <div><label>薪資月份</label><input id="payMonth" type="month"></div>
+      <div><label>本月出勤天數</label><input id="payWorkDays" type="number" min="0" value="22"></div>
+      <div><label>本月加班時數</label><input id="payOvertimeHours" type="number" min="0" value="0"></div>
+      <div><label>本月獎金 / 其他加給</label><input id="payBonus" type="number" min="0" value="0"></div>
+      <div><label>本月請假 / 事病假扣款</label><input id="payLeaveDeduction" type="number" min="0" value="0"></div>
+      <div><label>勞健保等其他扣款</label><input id="payOtherDeduction" type="number" min="0" value="0"></div>
+      <div><label>公司名稱</label><input id="companyName" value="公司名稱"></div>
+      <div><label>薪資單備註</label><input id="payslipNote" placeholder="例如：薪資已匯入指定帳戶"></div>
+    </div>
+    <div class="btns">
+      <button class="warn" onclick="exportAllPayslips()">匯出全部員工薪資單 HTML</button>
+    </div>
+    <p class="small">單筆薪資單請在下方員工清單按「薪資單」。產生後可列印，或另存為 PDF。</p>
+  </section>
+
+  <section class="card">
+    <h2>員工清單</h2>
+    <div class="toolbar"><input id="keyword" placeholder="搜尋：姓名、員工編號、部門、職稱" oninput="render()"><span class="pill" id="countInfo">0 筆資料</span></div>
+    <div style="overflow-x:auto;margin-top:12px">
+      <table>
+        <thead><tr><th>員編</th><th>姓名</th><th>部門</th><th class="hide-mobile">職稱</th><th>到職日</th><th>薪資條件</th><th>發薪日</th><th>下次薪資日</th><th class="num">月薪估算</th><th>狀態</th><th>操作</th></tr></thead>
+        <tbody id="tb"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+let data=JSON.parse(localStorage.getItem('employees_salary_slip')||localStorage.getItem('employees_v2')||'[]');
+for(let i=1;i<=31;i++){let o=document.createElement('option');o.value=i;o.textContent=i+' 日';if(i===5)o.selected=true;$('payDay').appendChild(o)}
+function initMonth(){let d=new Date();$('payMonth').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}initMonth();
+function pad(n){return String(n).padStart(2,'0')}
+function fmtDate(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+function daysInMonth(y,m){return new Date(y,m+1,0).getDate()}
+function money(n){return isFinite(n)?'NT$ '+Math.round(n).toLocaleString('zh-TW'):'-'}
+function num(v){return Number(v||0)}
+function escapeHtml(v){return String(v??'').replace(/[&<>"]/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s]))}
+function calc(e){
+  let type=e.salaryType||'月薪', amount=num(e.salaryAmount), allowance=num(e.allowance), deduction=num(e.deduction), wh=num(e.workHours)||8, pd=num(e.payDay)||5;
+  let monthlyGross = type==='月薪'?amount+allowance:(type==='日薪'?amount*22+allowance:amount*wh*22+allowance);
+  let monthlyNet = monthlyGross - deduction;
+  let today=new Date(); today.setHours(0,0,0,0); let y=today.getFullYear(), m=today.getMonth();
+  let dim=daysInMonth(y,m); let d=Math.min(pd,dim); let next=new Date(y,m,d);
+  if(next<today){m++; if(m>11){m=0;y++} dim=daysInMonth(y,m); d=Math.min(pd,dim); next=new Date(y,m,d)}
+  let firstDays='-', firstPay='-';
+  if(e.startDate){let s=new Date(e.startDate+'T00:00:00'); let sd=daysInMonth(s.getFullYear(),s.getMonth()); let count=sd-s.getDate()+1; firstDays=count+' / '+sd+' 天';
+    let pay= type==='月薪'?monthlyGross*(count/sd):(type==='日薪'?amount*count+allowance:amount*wh*count+allowance); firstPay=money(pay-deduction);
+  }
+  return {monthlyGross, monthlyNet, nextPayDate:fmtDate(next), firstDays, firstPay};
+}
+function calcPayslip(e){
+  let type=e.salaryType||'月薪', amount=num(e.salaryAmount), wh=num(e.workHours)||8, allowance=num(e.allowance), baseDeduction=num(e.deduction);
+  let workDays=num($('payWorkDays').value)||0, otHours=num($('payOvertimeHours').value)||0, bonus=num($('payBonus').value), leaveDed=num($('payLeaveDeduction').value), otherDed=num($('payOtherDeduction').value), otRate=num(e.overtimeRate);
+  let basePay=0;
+  if(type==='月薪') basePay=amount;
+  if(type==='日薪') basePay=amount*workDays;
+  if(type==='時薪') basePay=amount*wh*workDays;
+  let overtimePay=otRate*otHours;
+  let gross=basePay+allowance+bonus+overtimePay;
+  let totalDed=baseDeduction+leaveDed+otherDed;
+  let net=gross-totalDed;
+  return {basePay,allowance,bonus,overtimePay,gross,baseDeduction,leaveDed,otherDed,totalDed,net,workDays,otHours};
+}
+function previewCalc(){let e=getForm();let c=calc(e);$('nextPayDate').textContent=c.nextPayDate;$('firstMonthDays').textContent=c.firstDays;$('firstMonthPay').textContent=c.firstPay;$('monthlyPay').textContent=money(c.monthlyNet)}
+function getForm(){return {id:$('empid').value.trim(),name:$('name').value.trim(),dept:$('dept').value.trim(),position:$('position').value.trim(),startDate:$('startDate').value,salaryType:$('salaryType').value,salaryAmount:$('salaryAmount').value,payDay:$('payDay').value,workHours:$('workHours').value,allowance:$('allowance').value,deduction:$('deduction').value,overtimeRate:$('overtimeRate').value,status:$('status').value,phone:$('phone').value.trim(),email:$('email').value.trim(),bankAccount:$('bankAccount').value.trim(),salaryNote:$('salaryNote').value.trim()}}
+function saveEmp(){let e=getForm(); if(!e.id||!e.name){alert('請至少輸入「員工編號」與「姓名」');return} let idx=$('editIndex').value; if(idx===''){data.push(e)}else{data[Number(idx)]=e} localStorage.setItem('employees_salary_slip',JSON.stringify(data)); clearForm(); render();}
+function editEmp(i){let e=data[i]; $('editIndex').value=i; ['empid','name','dept','position','startDate','salaryAmount','phone','email','bankAccount','salaryNote'].forEach(id=>$(id).value=e[id.replace('empid','id')]||'');$('salaryType').value=e.salaryType||'月薪';$('payDay').value=e.payDay||5;$('workHours').value=e.workHours||8;$('allowance').value=e.allowance||0;$('deduction').value=e.deduction||0;$('overtimeRate').value=e.overtimeRate||0;$('status').value=e.status||'在職';previewCalc();window.scrollTo({top:0,behavior:'smooth'})}
+function delEmp(i){if(confirm('確定刪除此員工資料？')){data.splice(i,1);localStorage.setItem('employees_salary_slip',JSON.stringify(data));render()}}
+function clearForm(){['editIndex','empid','name','dept','position','startDate','salaryAmount','phone','email','bankAccount','salaryNote'].forEach(id=>$(id).value='');$('salaryType').value='月薪';$('payDay').value='5';$('workHours').value='8';$('allowance').value='0';$('deduction').value='0';$('overtimeRate').value='0';$('status').value='在職';previewCalc()}
+function render(){let kw=($('keyword')?.value||'').toLowerCase();let rows='';let shown=0;data.forEach((e,i)=>{let text=Object.values(e).join(' ').toLowerCase(); if(kw && !text.includes(kw))return; shown++; let c=calc(e); rows+=`<tr><td>${escapeHtml(e.id||'')}</td><td>${escapeHtml(e.name||'')}</td><td>${escapeHtml(e.dept||'')}</td><td class="hide-mobile">${escapeHtml(e.position||'')}</td><td>${escapeHtml(e.startDate||'')}</td><td>${escapeHtml(e.salaryType||'')} ${money(num(e.salaryAmount))}</td><td>每月 ${escapeHtml(e.payDay||5)} 日</td><td>${c.nextPayDate}</td><td class="num">${money(c.monthlyNet)}</td><td>${escapeHtml(e.status||'')}</td><td><button onclick="editEmp(${i})">編輯</button><button class="warn" onclick="exportPayslip(${i})">薪資單</button><button class="danger" onclick="delEmp(${i})">刪除</button></td></tr>`});$('tb').innerHTML=rows||'<tr><td colspan="11" class="center small">尚無資料</td></tr>';$('countInfo').textContent=shown+' 筆資料'}
+function payslipHtml(e, autoPrint=false){let p=calcPayslip(e);let month=$('payMonth').value||'';let company=$('companyName').value||'公司名稱';let note=$('payslipNote').value||'薪資已依公司規定計算。';let today=fmtDate(new Date());
+return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><title>薪資單_${escapeHtml(e.name)}_${month}</title><style>body{font-family:'Microsoft JhengHei',Arial,sans-serif;color:#1f2937;margin:24px;background:#f3f4f6}.slip{max-width:780px;margin:0 auto;background:#fff;border:1px solid #d1d5db;padding:28px;border-radius:10px}.top{text-align:center;border-bottom:3px solid #1f4e79;padding-bottom:12px;margin-bottom:16px}h1{margin:0;color:#1f4e79;font-size:26px}.sub{color:#6b7280;margin-top:6px}.info{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:12px 0}.box{border:1px solid #dbe3ee;padding:8px;border-radius:6px}.box b{display:inline-block;min-width:90px;color:#374151}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #d1d5db;padding:10px}th{background:#eaf2f8;color:#17395c}.num{text-align:right}.total{font-weight:800;background:#f8fafc}.net{font-size:20px;color:#0f766e}.sign{display:flex;justify-content:space-between;margin-top:35px}.small{font-size:12px;color:#6b7280;margin-top:12px}@media print{body{background:#fff;margin:0}.slip{border:0;box-shadow:none}.noprint{display:none}}</style></head><body><div class="slip"><div class="top"><h1>${escapeHtml(company)}</h1><div class="sub">員工薪資單 / Payslip</div></div><div class="info"><div class="box"><b>薪資月份</b>${escapeHtml(month)}</div><div class="box"><b>產生日期</b>${today}</div><div class="box"><b>員工編號</b>${escapeHtml(e.id)}</div><div class="box"><b>姓名</b>${escapeHtml(e.name)}</div><div class="box"><b>部門</b>${escapeHtml(e.dept)}</div><div class="box"><b>職稱</b>${escapeHtml(e.position)}</div><div class="box"><b>到職日</b>${escapeHtml(e.startDate)}</div><div class="box"><b>銀行帳號</b>${escapeHtml(e.bankAccount||'')}</div></div><table><thead><tr><th>應發項目</th><th class="num">金額</th></tr></thead><tbody><tr><td>基本薪資（${escapeHtml(e.salaryType)}）</td><td class="num">${money(p.basePay)}</td></tr><tr><td>固定津貼 / 加給</td><td class="num">${money(p.allowance)}</td></tr><tr><td>本月獎金 / 其他加給</td><td class="num">${money(p.bonus)}</td></tr><tr><td>加班費（${p.otHours} 小時）</td><td class="num">${money(p.overtimePay)}</td></tr><tr class="total"><td>應發合計</td><td class="num">${money(p.gross)}</td></tr></tbody></table><table><thead><tr><th>扣款項目</th><th class="num">金額</th></tr></thead><tbody><tr><td>預設每月扣款</td><td class="num">${money(p.baseDeduction)}</td></tr><tr><td>請假 / 事病假扣款</td><td class="num">${money(p.leaveDed)}</td></tr><tr><td>勞健保等其他扣款</td><td class="num">${money(p.otherDed)}</td></tr><tr class="total"><td>扣款合計</td><td class="num">${money(p.totalDed)}</td></tr><tr class="total"><td class="net">實發薪資</td><td class="num net">${money(p.net)}</td></tr></tbody></table><p class="small">備註：${escapeHtml(note)}<br>薪資條件備註：${escapeHtml(e.salaryNote||'無')}</p><div class="sign"><div>員工簽收：________________</div><div>主管 / 人資：________________</div></div><p class="small noprint">可使用瀏覽器列印功能，另存為 PDF。</p></div>${autoPrint?'<script>window.onload=function(){window.print()}<\/script>':''}</body></html>`}
+function downloadFile(filename, content){let blob=new Blob([content],{type:'text/html;charset=utf-8;'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click()}
+function exportPayslip(i){let e=data[i];let month=$('payMonth').value||'未設定月份';let html=payslipHtml(e,true);downloadFile('薪資單_'+(e.id||'')+'_'+(e.name||'')+'_'+month+'.html',html);let w=window.open('','_blank');if(w){w.document.open();w.document.write(html);w.document.close()}else{alert('已下載薪資單 HTML。如需直接預覽，請允許瀏覽器彈出視窗。')}}
+function exportAllPayslips(){if(!data.length){alert('尚無員工資料');return}let pages=data.map(e=>payslipHtml(e,false).replace(/<!DOCTYPE html>|<html lang="zh-Hant">|<head>[\s\S]*?<\/head>|<body>|<\/body>|<\/html>/g,'')).join('<div style="page-break-after:always"></div>');let company=escapeHtml($('companyName').value||'公司名稱');let month=$('payMonth').value||'未設定月份';let all=`<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><title>全部薪資單_${month}</title><style>body{font-family:'Microsoft JhengHei',Arial,sans-serif;color:#1f2937;margin:24px;background:#f3f4f6}.slip{max-width:780px;margin:0 auto 24px;background:#fff;border:1px solid #d1d5db;padding:28px;border-radius:10px}.top{text-align:center;border-bottom:3px solid #1f4e79;padding-bottom:12px;margin-bottom:16px}h1{margin:0;color:#1f4e79;font-size:26px}.sub{color:#6b7280;margin-top:6px}.info{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:12px 0}.box{border:1px solid #dbe3ee;padding:8px;border-radius:6px}.box b{display:inline-block;min-width:90px;color:#374151}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #d1d5db;padding:10px}th{background:#eaf2f8;color:#17395c}.num{text-align:right}.total{font-weight:800;background:#f8fafc}.net{font-size:20px;color:#0f766e}.sign{display:flex;justify-content:space-between;margin-top:35px}.small{font-size:12px;color:#6b7280;margin-top:12px}@media print{body{background:#fff;margin:0}.slip{border:0;box-shadow:none;page-break-inside:avoid}.noprint{display:none}}</style></head><body>${pages}</body></html>`;downloadFile('全部員工薪資單_'+company+'_'+month+'.html',all)}
+function exportCSV(){let header=['員工編號','姓名','部門','職稱','到職日','薪資類型','薪資金額','固定津貼','預設扣款','加班費率','每月發薪日','下次薪資日','到職當月計薪天數','到職當月預估薪資','月薪估算','每日標準工時','薪資狀態','電話','電子郵件','銀行帳號','薪資備註'];let lines=[header.join(',')];data.forEach(e=>{let c=calc(e);let row=[e.id,e.name,e.dept,e.position,e.startDate,e.salaryType,e.salaryAmount,e.allowance,e.deduction,e.overtimeRate,e.payDay,c.nextPayDate,c.firstDays,c.firstPay,c.monthlyNet,e.workHours,e.status,e.phone,e.email,e.bankAccount,e.salaryNote].map(v=>'"'+String(v??'').replaceAll('"','""')+'"');lines.push(row.join(','))});let blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8;'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='員工薪資資料_'+fmtDate(new Date())+'.csv';a.click()}
+function clearAll(){if(confirm('確定清除全部員工資料？此動作無法復原。')){data=[];localStorage.removeItem('employees_salary_slip');localStorage.removeItem('employees_v2');render()}}
+previewCalc();render();
+</script>
+</body>
+</html>
